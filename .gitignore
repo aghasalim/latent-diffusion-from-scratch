@@ -12,3 +12,6 @@ dist/
 
 # results/ is deliberately NOT ignored -- benchmark CSVs are committed so the
 # README tables stay reproducible.
+
+# MNIST is downloaded on first use, not committed (9.6 MB)
+data/

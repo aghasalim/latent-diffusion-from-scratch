@@ -1,0 +1,11 @@
+# CPU only. MNIST at 32x32 with small models, which is what makes the
+# rate-distortion ablation affordable without a GPU.
+torch
+numpy
+matplotlib
+pandas
+pillow
+
+# dev
+pytest
+ruff
