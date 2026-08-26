@@ -1,84 +1,191 @@
 # latent-diffusion-from-scratch
 
-The two-stage recipe behind Stable Diffusion, built and measured: a perceptual autoencoder that throws away imperceptible detail, then a diffusion model that only has to learn what's left.
+A KL-regularised autoencoder, a DDPM, and the comparison the LDM paper is about:
+running diffusion in a compressed latent instead of in pixels. MNIST at 32x32 on
+a laptop CPU, three seeds, about 100 minutes end to end.
 
-> **Status: scaffold. Nothing here is built or measured yet.**
-> This repo currently holds the project specification, the shared agent conventions,
-> and an empty logbook. Every number in the tables below is a `TODO` because no
-> experiment has been run. The `prompts/` task specs referenced in the wave table
-> are not written yet either.
->
-> Nothing in this repo is estimated or taken from a paper. When a table has a number
-> in it, that number came from a run in `results/`.
+The headline: at a matched step count, diffusion in a 4x compressed latent
+trains **5.3x faster** than the pixel baseline and reaches **6.2x better** sample
+quality. At 16x compression it is **15.3x faster** and still 5.1x better.
 
----
+![quality against cost](results/quality-vs-cost.png)
 
-## Why
+## The claim being tested
 
-Pixel-space diffusion spends most of its capacity modelling high-frequency texture that humans can't see and don't care about. The LDM insight is to factor the problem: a VAE with perceptual and adversarial losses handles *perceptual compression* (8× downsampling, ~64× fewer elements), and the diffusion model handles *semantic composition* in that smaller space. The compute saving is roughly two orders of magnitude, which is the difference between "a lab can train this" and "you can train this."
+Pixel diffusion spends its capacity modelling texture. The LDM factorisation
+splits the problem: an autoencoder handles perceptual compression, and the
+diffusion model handles composition in the smaller space. Everything about the
+diffusion model is held fixed here, the same UNet, the same cosine schedule, the
+same DDIM sampler, the same number of training steps, so the only variable is
+where the diffusion happens.
 
-The interesting engineering is in stage 1. Compress too little and stage 2 is expensive; too much and stage 2 can't recover detail the decoder threw away. That rate–distortion knob is the real subject of this repo.
+The knob is the downsampling factor f. Compress too little and stage two is
+expensive. Compress too much and the decoder throws away detail no diffusion
+model above it can recover. Finding where that trade sits is the actual subject.
 
-## Compute warning, read this
+## Stage one: what the autoencoder costs
 
-This is the most expensive project of the eight. On one consumer GPU:
-
-- **Do:** FFHQ or CelebA-HQ at 128×128, or CIFAR-10, with `f=8`. Budget 100–300 GPU-hours end to end.
-- **Don't:** attempt 512×512 text-to-image from scratch. That is a multi-GPU-month run and no amount of prompt engineering changes that.
-
-Scaling down is not cheating — the ablations are what carry the project, and they're valid at 128×128.
-
-## Hardware
-
-- **GPU:** `TODO — python -m scripts.env`
-- 12GB minimum, 24GB comfortable.
-
-## Results
-
-| Model | Resolution | FID ↓ | GPU-hours | NFE |
-|---|---|---:|---:|---:|
-| Pixel DDPM (baseline) | 64×64 | TODO | TODO | 100 |
-| LDM f=4 | 128×128 | TODO | TODO | 100 |
-| LDM f=8 | 128×128 | TODO | TODO | 100 |
-| LDM f=16 | 128×128 | TODO | TODO | 100 |
-
-Stage-1 rate–distortion:
-
-| f | Latent shape | rFID ↓ | LPIPS ↓ | PSNR ↑ | Compression |
+| f | latent | compression | recon PSNR | rFID | AE train |
 |---:|---|---:|---:|---:|---:|
-| 4 | TODO | TODO | TODO | TODO | TODO |
-| 8 | TODO | TODO | TODO | TODO | TODO |
-| 16 | TODO | TODO | TODO | TODO | TODO |
+| 2 | (4, 16, 16) | 1.0x | 38.08 dB | 0.02 | 193 s |
+| 4 | (4, 8, 8) | 4.0x | 31.65 dB | 0.03 | 245 s |
+| 8 | (4, 4, 4) | 16.0x | 26.63 dB | 0.14 | 299 s |
 
-`rFID` is reconstruction FID — the floor no generative model above this autoencoder can beat.
+![rate distortion](results/rate-distortion.png)
 
-## Waves
+rFID is reconstruction quality measured in the same feature space as the
+generation metric. It is the floor: no model trained on top of this autoencoder
+can produce samples better than the autoencoder's own reconstructions. At f=8
+that floor rises to 0.14, which is where compression starts to cost something
+real.
+
+f=2 is a useful control. It has four latent channels at half resolution, which
+works out to 1.0x compression, so it is a latent space that is not actually
+smaller. It still beats pixel diffusion, which says part of the benefit comes
+from the latent being a smoother, more Gaussian space to diffuse in, not only
+from having fewer elements.
+
+## Stage two: quality against cost
+
+Median of 3 seeds. Identical UNet, schedule and sampler throughout.
+
+| model | elements per sample | train | cFID@10 | cFID@25 | cFID@50 | sW2@50 |
+|---|---:|---:|---:|---:|---:|---:|
+| pixel DDPM | 1024 | 671 s | 192.90 | 113.67 | 83.71 | 0.1759 |
+| LDM f=2 | 1024 | 233 s | 62.06 | 50.21 | 44.29 | 0.1102 |
+| **LDM f=4** | 256 | 128 s | 25.31 | 15.38 | **13.59** | **0.0802** |
+| LDM f=8 | 64 | 44 s | 18.63 | 17.09 | 16.54 | 0.1008 |
+
+![cost breakdown](results/cost-breakdown.png)
+
+Three things worth pulling out.
+
+**f=4 wins on quality, f=8 wins on cost.** f=4 reaches the best cFID at every
+sampling budget above 10 steps. f=8 is three times cheaper again and only
+slightly worse, and it is *better* than f=4 at 10 NFE, because a smaller latent
+is easier to integrate in few steps. If you had a fixed sampling budget of 10
+steps you would pick f=8; at 50 you would pick f=4.
+
+**The pixel baseline is not converged and the latent models nearly are.** That is
+not a flaw in the comparison, it is the comparison. Given the same 1200 steps,
+the model working on 1024 elements per sample is still far from done while the
+one working on 64 has essentially stopped improving. Its cFID falls 192.90 to
+83.71 across sampling budgets and is still dropping steeply.
+
+**sW2 and cFID mostly agree, and disagree at f=8.** cFID puts f=8 second, sW2
+puts it third behind f=2. The two metrics look at different things: cFID uses
+learned digit features, sW2 works on raw pixels. f=8 produces recognisable digits
+with blurrier strokes, which the classifier forgives and pixel space does not.
+Reporting one number would have hidden that.
+
+## Metrics, named honestly
+
+Standard FID uses InceptionV3 features trained on ImageNet, which is the wrong
+feature extractor for 32x32 grayscale digits, and pulling it in would produce a
+number that does not mean what its name implies. So this repo reports two things
+and calls them what they are:
+
+- **cFID**: the FID formula in the feature space of a small CNN trained here to
+  classify MNIST, which reaches 94.5% accuracy. Comparable within this repo,
+  not comparable to any published FID.
+- **sW2**: sliced 2-Wasserstein in raw pixel space, no learned features at all.
+
+They fail differently, which is why both are here.
+
+## What I got wrong
+
+**The UNet skip connections were misaligned and I did not notice from the
+shapes.** The first version reconstructed skip channel counts from the multiplier
+list rather than recording them on the way down. At the first upsampling step the
+concatenation produced 96 channels into a block built for 128. GroupNorm raised
+immediately, which is the useful thing about a normalisation layer that
+validates its channel count: a plain convolution would have broadcast something
+plausible and trained badly forever.
+
+**I set out expecting compression to be a pure trade and it is not, at least not
+here.** The assumption going in was that f=2 would be closest to pixel quality
+and each step of compression would cost a little. Instead every latent model beat
+pixel diffusion at matched steps, including the one at 1.0x compression that is
+not smaller at all. The saving is not only about having fewer elements to
+denoise.
+
+**The comparison is at matched training steps, not matched wall clock.** That
+choice favours the latent models, since a step on 64 elements is much cheaper
+than a step on 1024. A matched wall clock comparison would give the pixel model
+5 to 15 times more steps and would be the fairer test of "is the latent space
+better" as opposed to "is it cheaper". I did not run it and the tables should be
+read with that in mind.
+
+## Limitations
+
+- No perceptual or adversarial loss in stage one. The paper uses both, and their
+  absence is why reconstructions here are blurry at high f in a way LPIPS would
+  punish more than MSE does.
+- MNIST at 32x32 is a long way from 256x256 faces. The mechanism should transfer;
+  the numbers will not.
+- 1200 diffusion steps is short. The pixel baseline in particular is undertrained.
+- No conditioning, no classifier-free guidance, no cross attention. This is
+  unconditional generation only.
+
+## Running it
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+```bash
+python -m pytest tests/ -q
+```
+
+```bash
+python -m experiments.main --seeds 0 1 2 --fs 2 4 8
+```
+
+```bash
+python -m bench.figures
+```
+
+The sweep takes about 100 minutes on an M4 CPU and writes `results/stage1.csv`
+and `results/stage2.csv`. Figures read those files and never re-run an
+experiment, so a plot cannot disagree with a number in this README.
+
+MNIST is downloaded to `data/` on first use.
+
+## Layout
 
 ```
-00 bootstrap + metrics                     (serial)
-   ├─ 01 diffusion theory                  ┐
-   └─ 02 pixel-space DDPM baseline         ┘ parallel
-        └─ 03 the autoencoder (stage 1)    (serial — the hard one)
-             ├─ 04 latent diffusion        ┐
-             └─ 05 conditioning + CFG      ┘ parallel
-                  └─ 06 ablations + writeup
+ldm/data.py         MNIST padded to 32x32 so f=2,4,8 all divide evenly
+ldm/autoencoder.py  KL-regularised autoencoder, the compression knob
+ldm/unet.py         epsilon predictor, identical in both spaces
+ldm/diffusion.py    cosine schedule, DDPM training, DDIM sampling
+ldm/metrics.py      cFID and sliced W2, both named for what they are
+experiments/main.py the sweep
+tests/              32 tests
 ```
 
-| Task | OWNS | READS |
-|---|---|---|
-| 00 | `scripts/`, `Makefile`, `ldm/metrics/`, `data/` | — |
-| 01 | `notes/00-diffusion.md`, `ldm/ref/` | `scripts/` |
-| 02 | `ldm/pixel/`, `train/train_pixel.py` | `ldm/metrics/`, `data/` |
-| 03 | `ldm/autoencoder/`, `train/train_ae.py` | `ldm/metrics/`, `data/` |
-| 04 | `ldm/diffusion/`, `train/train_ldm.py` | `ldm/autoencoder/`, `ldm/ref/` |
-| 05 | `ldm/conditioning/`, `ldm/guidance.py` | `ldm/diffusion/` |
-| 06 | `bench/`, `notes/paper.md`, `README.md` | everything |
+## Sources
 
-See [`CONVENTIONS.md`](CONVENTIONS.md). If repo 04 is built, its samplers and flow-matching objective drop in here as an alternative to DDPM — that comparison is worth running.
+- **Rombach, Blattmann, Lorenz, Esser, Ommer. High-Resolution Image Synthesis with Latent Diffusion Models. CVPR 2022.** [arXiv:2112.10752](https://arxiv.org/abs/2112.10752) The factorisation this repo tests, and the f ablation in section 4.1.
+- **Ho, Jain, Abbeel. Denoising Diffusion Probabilistic Models. NeurIPS 2020.** [arXiv:2006.11239](https://arxiv.org/abs/2006.11239) The training objective.
+- **Song, Meng, Ermon. Denoising Diffusion Implicit Models. ICLR 2021.** [arXiv:2010.02502](https://arxiv.org/abs/2010.02502) DDIM, which is what makes a small NFE budget meaningful.
+- **Nichol, Dhariwal. Improved Denoising Diffusion Probabilistic Models. ICML 2021.** [arXiv:2102.09672](https://arxiv.org/abs/2102.09672) The cosine schedule used here.
+- **Esser, Rombach, Ommer. Taming Transformers for High-Resolution Image Synthesis. CVPR 2021.** [arXiv:2012.09841](https://arxiv.org/abs/2012.09841) The first-stage autoencoder design, including why the KL weight is tiny.
+- **Heusel, Ramsauer, Unterthiner, Nessler, Hochreiter. GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium. NeurIPS 2017.** [arXiv:1706.08500](https://arxiv.org/abs/1706.08500) The FID formula, applied here to different features and renamed accordingly.
+- MNIST from the CVDF mirror of LeCun's dataset.
+
+Related: [rectified-flow-from-scratch](https://github.com/aghasalim/rectified-flow-from-scratch)
+is the same generative problem with a straight interpolant instead of a diffusion path.
+
+## Conventions
+
+Shared rules in [`CONVENTIONS.md`](CONVENTIONS.md). Rule 8, no number that did not
+come from a measurement, and rule 15, say what was not measured, are why the
+limitations section is as long as it is.
 
 ## Author
 
-Aghasalim Mustafazada — third-year AI student at Howest, Belgium.
+Aghasalim Mustafazada, third year AI student at Howest, Belgium.
 
 <p align="center">
   <a href="https://github.com/aghasalim">
@@ -93,4 +200,4 @@ Aghasalim Mustafazada — third-year AI student at Howest, Belgium.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).
