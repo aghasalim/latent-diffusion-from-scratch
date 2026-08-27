@@ -25,19 +25,31 @@ model above it can recover. Finding where that trade sits is the actual subject.
 
 ## Stage one: what the autoencoder costs
 
-| f | latent | compression | recon PSNR | rFID | AE train |
-|---:|---|---:|---:|---:|---:|
-| 2 | (4, 16, 16) | 1.0x | 38.08 dB | 0.02 | 193 s |
-| 4 | (4, 8, 8) | 4.0x | 31.65 dB | 0.03 | 245 s |
-| 8 | (4, 4, 4) | 16.0x | 26.63 dB | 0.14 | 299 s |
+Median of 3 seeds, with the seed range for rFID because it is much noisier than
+the reconstruction error beside it.
+
+| f | latent | compression | recon PSNR | rFID | rFID range over seeds | AE train |
+|---:|---|---:|---:|---:|---|---:|
+| 2 | (4, 16, 16) | 1.0x | 38.08 dB | 0.023 | 0.021 to 0.033 | 193 s |
+| 4 | (4, 8, 8) | 4.0x | 31.65 dB | 0.034 | 0.018 to 0.107 | 245 s |
+| 8 | (4, 4, 4) | 16.0x | 26.63 dB | 0.139 | 0.078 to 0.172 | 299 s |
 
 ![rate distortion](results/rate-distortion.png)
 
 rFID is reconstruction quality measured in the same feature space as the
 generation metric. It is the floor: no model trained on top of this autoencoder
-can produce samples better than the autoencoder's own reconstructions. At f=8
-that floor rises to 0.14, which is where compression starts to cost something
-real.
+can produce samples better than the autoencoder's own reconstructions.
+
+**The range column is the reason this section makes only one claim.** PSNR is
+tight, spanning 0.23 dB at f=2 and 0.15 dB at f=8, so the distortion ordering is
+solid. rFID is not: at f=4 the three seeds span 0.018 to 0.107, a factor of 5.9,
+and that interval sits entirely across f=2's. So **f=2 and f=4 are not separated
+by rFID** and it would be wrong to read the medians 0.023 and 0.034 as a rise.
+
+f=8 is a different matter. Its range, 0.078 to 0.172, does not overlap f=2's at
+all, so the floor genuinely rises there, and that is where compression starts to
+cost something real. One claim, and the numbers that support it are in the table
+rather than behind a median.
 
 f=2 is a useful control. It has four latent channels at half resolution, which
 works out to 1.0x compression, so it is a latent space that is not actually
