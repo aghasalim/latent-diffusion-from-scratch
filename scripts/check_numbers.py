@@ -10,11 +10,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def median_by(rows, key_cols, val, places):
+def _group(rows, key_cols, val):
     groups: dict[tuple, list[float]] = {}
     for r in rows:
         groups.setdefault(tuple(r[c] for c in key_cols), []).append(float(r[val]))
-    return {k: f"{statistics.median(v):.{places}f}" for k, v in groups.items()}
+    return groups
+
+
+def median_by(rows, key_cols, val, places):
+    return {k: f"{statistics.median(v):.{places}f}"
+            for k, v in _group(rows, key_cols, val).items()}
+
+
+def extremes_by(rows, key_cols, val, places):
+    """Min and max per group, for the seed-range columns the README quotes.
+
+    A median alone hides how repeatable a number is. rFID at f=4 spans a factor
+    of 5.9 across three seeds, wide enough that f=2 and f=4 are not separated,
+    so the range is a claim in its own right and gets checked like one.
+    """
+    out = {}
+    for k, v in _group(rows, key_cols, val).items():
+        out[k + ("min",)] = f"{min(v):.{places}f}"
+        out[k + ("max",)] = f"{max(v):.{places}f}"
+    return out
 
 
 def main() -> int:
@@ -23,9 +42,12 @@ def main() -> int:
     body = (ROOT / "README.md").read_text()
 
     claims = []
-    for col, places in (("psnr", 2), ("rfid", 2), ("compression", 1)):
+    for col, places in (("psnr", 2), ("rfid", 3), ("compression", 1)):
         for k, v in median_by(s1, ["f"], col, places).items():
             claims.append((f"stage1 f={k[0]} {col}", v))
+    # the rFID range column
+    for k, v in extremes_by(s1, ["f"], "rfid", 3).items():
+        claims.append((f"stage1 f={k[0]} rfid {k[1]}", v))
     # cFID is quoted at every sampling budget; sW2 only at the largest, which is
     # what the results table states. Checking sW2 everywhere would fail on
     # numbers the README never claims.
