@@ -40,6 +40,11 @@ def main() -> int:
     s1 = list(csv.DictReader((ROOT / "results" / "stage1.csv").open()))
     s2 = list(csv.DictReader((ROOT / "results" / "stage2.csv").open()))
     body = (ROOT / "README.md").read_text()
+    # Detail moved out of the README lives in notes/METHODS.md. A figure quoted
+    # there is still a quoted figure and still has to match its source.
+    _methods = ROOT / "notes" / "METHODS.md"
+    if _methods.exists():
+        body += "\n" + _methods.read_text()
 
     claims = []
     for col, places in (("psnr", 2), ("rfid", 3), ("compression", 1)):
