@@ -189,9 +189,9 @@ tests/              32 tests
 Related: [rectified-flow-from-scratch](https://github.com/aghasalim/rectified-flow-from-scratch)
 is the same generative problem with a straight interpolant instead of a diffusion path.
 
-## Conventions
+## Methodology
 
-Shared rules in [`CONVENTIONS.md`](CONVENTIONS.md). Rule 8, no number that did not
+The rules this follows are in [`METHODOLOGY.md`](METHODOLOGY.md). Rule 8, no number that did not
 come from a measurement, and rule 15, say what was not measured, are why the
 limitations section is as long as it is.
 
