@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: If you use this work, please cite it as below.
+title: "Latent Diffusion from scratch"
+abstract: "A KL-regularised autoencoder and a DDPM, comparing diffusion in a compressed latent against diffusion in pixel space at matched training steps."
+type: software
+authors:
+  - family-names: Mustafazada
+    given-names: Aghasalim
+    orcid: "https://orcid.org/0009-0001-8746-4582"
+    affiliation: "Howest University of Applied Sciences"
+repository-code: "https://github.com/aghasalim/latent-diffusion-from-scratch"
+url: "https://aghasalim.github.io/"
+license: MIT
+date-released: "2026-08-27"
+version: "1.0.0"
+keywords:
+  - latent diffusion
+  - DDPM
+  - DDIM
+  - autoencoder
+  - generative models

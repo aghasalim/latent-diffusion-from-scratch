@@ -1,5 +1,10 @@
 # latent-diffusion-from-scratch
 
+[![ci](https://github.com/aghasalim/latent-diffusion-from-scratch/actions/workflows/ci.yml/badge.svg)](https://github.com/aghasalim/latent-diffusion-from-scratch/actions/workflows/ci.yml)
+[![python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![results](https://img.shields.io/badge/results-reproducible-1a9850.svg)](results/)
+
 A KL-regularised autoencoder, a DDPM, and the comparison the LDM paper is about:
 running diffusion in a compressed latent instead of in pixels. MNIST at 32x32 on
 a laptop CPU, three seeds, about 100 minutes end to end.
