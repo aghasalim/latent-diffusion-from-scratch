@@ -99,7 +99,7 @@ python -m pytest tests/ -q
 ```
 
 ```bash
-python -m experiments.main --seeds 0 1 2 --fs 2 4 8
+python -m experiments.main --seeds 0 1 2 --fs 2 4 8 --n 15000 --ae-steps 1000 --dm-steps 1200 --eval-n 750
 ```
 
 ```bash
