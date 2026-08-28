@@ -15,7 +15,7 @@ Median of 3 seeds. Identical UNet, schedule and sampler throughout.
 | **LDM f=4** | 256 | 128 s | 25.31 | 15.38 | **13.59** | **0.0802** |
 | LDM f=8 | 64 | 44 s | 18.63 | 17.09 | 16.54 | 0.1008 |
 
-![cost breakdown](results/cost-breakdown.png)
+![cost breakdown](../results/cost-breakdown.png)
 
 Three things worth pulling out.
 

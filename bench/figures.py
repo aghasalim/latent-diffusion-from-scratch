@@ -18,7 +18,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.animation import FuncAnimation, PillowWriter
+from matplotlib.colors import to_rgb
+from PIL import Image
 
 from bench.style import PALETTE, titled
 
@@ -161,6 +162,7 @@ def fig_cost_breakdown(out: Path) -> Path:
 
 # --- the animation ----------------------------------------------------------
 GIF_F, GIF_SEED, GIF_NFE, GIF_N, GIF_FPS = 4, 0, 50, 16, 15
+GIF_DPI, GIF_GREYS, GIF_HOLD = 96, 32, 15
 CACHE = RESULTS / "denoise-frames.npz"
 
 
@@ -212,12 +214,28 @@ def _tile(frame: np.ndarray, gap: int = 2) -> np.ndarray:
                       for r in range(side)])
 
 
+def _gif_palette() -> Image.Image:
+    """One fixed palette for every frame: a grey ramp plus the progress bar.
+
+    Nothing in the figure is coloured except that bar, so 32 grey levels hold
+    it. The mean error against the full colour render is under 1 of 255, which
+    is not visible, and the short palette is most of the size saving. Sharing
+    one palette across frames also lets the writer store only what changed.
+    """
+    green = np.array(to_rgb(PALETTE[2])) * 255
+    ramp = [[v] * 3 for v in np.linspace(0, 255, GIF_GREYS).round()]
+    # the bar is drawn on white, so its antialiased edge needs the blend too
+    blend = [(255 + (green - 255) * t).round() for t in np.linspace(0, 1, 8)[1:]]
+    pal = Image.new("P", (1, 1))
+    pal.putpalette(np.concatenate(ramp + blend).astype(np.uint8).tobytes())
+    return pal
+
+
 def fig_denoising(out: Path) -> Path:
     tiles = [_tile(f) for f in _denoise_frames()]
-    order = list(range(len(tiles))) + [len(tiles) - 1] * 14   # hold on the result
 
     fig, (ax, axp) = plt.subplots(
-        2, 1, figsize=(4.5, 5.05),
+        2, 1, figsize=(4.5, 5.05), dpi=GIF_DPI,
         gridspec_kw={"height_ratios": [1, 0.05], "hspace": 0.16})
     im = ax.imshow(tiles[0], cmap="gray", vmin=0, vmax=255, interpolation="nearest")
     ax.set_xticks([])
@@ -236,19 +254,25 @@ def fig_denoising(out: Path) -> Path:
     axp.set_xlabel("DDIM step")
     bar = axp.barh(0.5, 0, height=1.0, color=PALETTE[2], align="center")[0]
 
-    def update(k):
-        i = order[k]
+    pal = _gif_palette()
+    frames = []
+    for i in range(len(tiles)):
         im.set_data(tiles[i])
         bar.set_width(i)
-        return im, bar
-
-    anim = FuncAnimation(fig, update, frames=len(order),
-                         interval=1000 / GIF_FPS, blit=False)
-    # savefig.bbox is tight for the static figures, which would let the frame
-    # size wobble here and the writer needs it constant.
-    with matplotlib.rc_context({"savefig.bbox": None}):
-        anim.save(out, writer=PillowWriter(fps=GIF_FPS), dpi=96)
+        fig.canvas.draw()
+        rgb = np.asarray(fig.canvas.buffer_rgba())[..., :3]
+        frames.append(Image.fromarray(rgb).quantize(palette=pal,
+                                                    dither=Image.Dither.NONE))
     plt.close(fig)
+
+    # Writing the frames here rather than through matplotlib's PillowWriter is
+    # the point of the exercise. That writer picks a palette per frame and
+    # dithers it, which puts fresh noise in every pixel of every frame and
+    # left nothing for the compressor to find. It made a 1.8 MB file.
+    step = round(1000 / GIF_FPS)
+    frames[0].save(out, save_all=True, append_images=frames[1:], loop=0,
+                   duration=[step] * (len(frames) - 1) + [step * GIF_HOLD],
+                   optimize=True)
     return out
 
 
