@@ -63,7 +63,22 @@ from the latent being a smoother, more Gaussian space to diffuse in, not only
 from having fewer elements.
 
 ## Stage two: quality against cost
-| model | elements per sample | train | cFID@10 | cFID@25 | cFID@50 | sW2@50 | |---|---:|---:|---:|---:|---:|---:| | pixel DDPM | 1024 | 671 s | 192.90 | 113.67 | 83.71 | 0.1759 | | LDM f=2 | 1024 | 233 s | 62.06 | 50.21 | 44.29 | 0.1102 | | **LDM f=4** | 256 | 128 s | 25.31 | 15.38 | **13.59** | **0.0802** | | LDM f=8 | 64 | 44 s | 18.63 | 17.09 | 16.54 | 0.1008 | Three things worth pulling out.
+
+Median of 3 seeds. Identical UNet, schedule and sampler throughout.
+
+| model | elements per sample | train | cFID@10 | cFID@25 | cFID@50 | sW2@50 |
+|---|---:|---:|---:|---:|---:|---:|
+| pixel DDPM | 1024 | 671 s | 192.90 | 113.67 | 83.71 | 0.1759 |
+| LDM f=2 | 1024 | 233 s | 62.06 | 50.21 | 44.29 | 0.1102 |
+| **LDM f=4** | 256 | 128 s | 25.31 | 15.38 | **13.59** | **0.0802** |
+| LDM f=8 | 64 | 44 s | 18.63 | 17.09 | 16.54 | 0.1008 |
+
+![reverse diffusion sampling from the f=4 model](results/denoising.gif)
+
+This is the f=4 row of that table being produced: 16 samples, seed 0, DDIM at 50
+steps, the latent decoded to pixels after every step. The model, the schedule and
+the starting noise are fixed, and only the step index moves. A few of the sixteen
+never land on a digit. That is what a cFID of 13.59 looks like up close.
 
 ![cost breakdown](results/cost-breakdown.png)
 
@@ -107,8 +122,13 @@ python -m bench.figures
 ```
 
 The sweep takes about 100 minutes on an M4 CPU and writes `results/stage1.csv`
-and `results/stage2.csv`. Figures read those files and never re-run an
+and `results/stage2.csv`. The plots read those files and never re-run an
 experiment, so a plot cannot disagree with a number in this README.
+
+The animation is the one exception, because a sampling trajectory is not in a
+table. It retrains the f=4 pair at seed 0 with the settings recorded in
+`results/run-meta.json`, which takes about six minutes, then caches the frames
+next to the figures. It writes no CSV.
 
 MNIST is downloaded to `data/` on first use.
 
@@ -121,7 +141,7 @@ ldm/unet.py         epsilon predictor, identical in both spaces
 ldm/diffusion.py    cosine schedule, DDPM training, DDIM sampling
 ldm/metrics.py      cFID and sliced W2, both named for what they are
 experiments/main.py the sweep
-tests/              32 tests
+tests/              33 tests
 ```
 
 ## Sources

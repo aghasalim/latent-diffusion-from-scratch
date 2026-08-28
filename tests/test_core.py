@@ -162,6 +162,21 @@ def test_ddim_output_is_finite():
     assert torch.isfinite(out).all()
 
 
+def test_ddim_callback_sees_every_step_and_changes_nothing():
+    """The animation in bench/figures.py reads the trajectory through this."""
+    torch.manual_seed(0)
+    net, d = UNet(channels=1), Diffusion(200)
+    seen = []
+    a = d.ddim_sample(net, (2, 1, 32, 32), nfe=6,
+                      generator=torch.Generator().manual_seed(3),
+                      callback=lambda i, t, x0, x: seen.append(x.clone()))
+    b = d.ddim_sample(net, (2, 1, 32, 32), nfe=6,
+                      generator=torch.Generator().manual_seed(3))
+    assert len(seen) == 6
+    assert torch.equal(seen[-1], a)
+    assert torch.allclose(a, b, atol=1e-6)
+
+
 # --- metrics ----------------------------------------------------------------
 def test_cfid_is_near_zero_for_the_same_distribution():
     torch.manual_seed(0)
