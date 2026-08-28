@@ -105,8 +105,21 @@ def fig_quality_vs_cost(out: Path) -> Path:
     a.minorticks_off()
     a.set_xlabel("NFE (model calls per sample)")
     a.set_ylabel("cFID (lower is better)")
-    titled(a, "Latent diffusion wins at every step budget",
-           "Same UNet, schedule and sampler everywhere. Dots are single seeds.")
+    # The title is a claim about the median lines, so take it from the table.
+    # Every latent median does beat pixel at every budget, but the pixel seeds
+    # spread far enough that the best one lands under f=2, which the panel
+    # shows and the old title did not say. Both come off the CSV, so neither
+    # the claim nor the budgets in it can drift from the data.
+    med = t.pivot_table(index="nfe", columns="model", values="cfid",
+                        aggfunc="median")
+    assert med.drop(columns="pixel DDPM").lt(med["pixel DDPM"], axis=0).all().all(), \
+        "the medians no longer support the title of this panel"
+    best_pixel = t[t["model"] == "pixel DDPM"].groupby("nfe")["cfid"].min()
+    under = [str(n) for n in med.index[best_pixel < med["LDM f=2"]]]
+    note = (f"Best pixel seed beats the f=2 median at {' and '.join(under)} NFE."
+            if under else "Same UNet, schedule and sampler everywhere.")
+    titled(a, "Latent diffusion wins on medians at every step budget",
+           f"{note} Dots are single seeds.")
 
     b.set_xscale("log")
     b.set_yscale("log")

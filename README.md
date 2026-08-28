@@ -60,9 +60,12 @@ rather than behind a median.
 
 f=2 is a useful control. It has four latent channels at half resolution, which
 works out to 1.0x compression, so it is a latent space that is not actually
-smaller. It still beats pixel diffusion, which says part of the benefit comes
-from the latent being a smoother, more Gaussian space to diffuse in, not only
-from having fewer elements.
+smaller. It still beats pixel diffusion on the median at every step budget,
+which says part of the benefit comes from the latent being a smoother, more
+Gaussian space to diffuse in, not only from having fewer elements. The seeds
+overlap though. At 50 NFE the best pixel run is better than all three f=2 runs,
+so f=2 against pixel is the weakest comparison in stage two. f=4 and f=8 do not
+overlap pixel at any budget.
 
 ## Stage two: quality against cost
 
