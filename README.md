@@ -45,11 +45,13 @@ rFID is reconstruction quality measured in the same feature space as the
 generation metric. It is the floor: no model trained on top of this autoencoder
 can produce samples better than the autoencoder's own reconstructions.
 
-**The range column is the reason this section makes only one claim.** PSNR is
-tight, spanning 0.23 dB at f=2 and 0.15 dB at f=8, so the distortion ordering is
-solid. rFID is not: at f=4 the three seeds span 0.018 to 0.107, a factor of 5.9,
-and that interval sits entirely across f=2's. So **f=2 and f=4 are not separated
-by rFID** and it would be wrong to read the medians 0.023 and 0.034 as a rise.
+**The range column is the reason this section makes only one claim.** PSNR
+spans 0.73 dB across seeds at f=2, 0.20 dB at f=4 and 0.14 dB at f=8. The f=2
+spread is the widest of the three. The levels are still 5.8 dB and 4.8 dB apart
+at their closest seeds, so the distortion ordering is solid. rFID is not: at
+f=4 the three seeds span 0.018 to 0.107, a factor of 5.9, and that interval
+sits entirely across f=2's. So **f=2 and f=4 are not separated by rFID** and it
+would be wrong to read the medians 0.023 and 0.034 as a rise.
 
 f=8 is a different matter. Its range, 0.078 to 0.172, does not overlap f=2's at
 all, so the floor genuinely rises there, and that is where compression starts to
