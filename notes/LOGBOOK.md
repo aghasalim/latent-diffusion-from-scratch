@@ -2,7 +2,7 @@
 
 ## 2026-08-27, the UNet skip connections were misaligned, and GroupNorm caught it
 **Tried:** first forward pass of the UNet at 32x32 with mults=(1,2).
-**Measured:**`RuntimeError: Expected weight to be a vector of size equal to the number of channels in input, but got weight of shape [128] and input of shape [4, 96, 16, 16]`.
+**Measured:** `RuntimeError: Expected weight to be a vector of size equal to the number of channels in input, but got weight of shape [128] and input of shape [4, 96, 16, 16]`.
 **Concluded:** I reconstructed the skip channel counts from the multiplier list on the way up instead of recording them on the way down, and was off by one level. Worth noting what saved me: GroupNorm validates its channel count, so it raised at the exact layer. A plain convolution would have accepted whatever it was given, produced a plausible tensor, and trained badly forever. Rewrote the UNet to push channel counts onto a list during the downward pass and pop them on the way up, and there is now a shape test parametrised over five channel/resolution/multiplier combinations.
 
 ## 2026-08-27, stage one rate distortion, three seeds
