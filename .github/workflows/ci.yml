@@ -18,8 +18,55 @@ jobs:
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements.txt
       - name: Lint
-        run: ruff check ldm/ bench/ tests/ experiments/ scripts/
+        run: ruff check ldm/ bench/ tests/ experiments/ scripts/ verify/
       - name: Test
         run: python -m pytest tests/ -q
       - name: Check quoted numbers against results/
         run: python scripts/check_numbers.py
+      - name: Golden vectors still match ldm/
+        run: |
+          python verify/export_golden.py "$RUNNER_TEMP/golden" > /dev/null
+          diff -r "$RUNNER_TEMP/golden" verify/golden
+
+  differential:
+    # Recompute the published numbers in eight other languages and require them
+    # to agree. The Python check above recomputes them the way the sweep did, so
+    # it agrees with itself by construction; these do not.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install R
+        run: |
+          command -v Rscript || {
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends r-base-core
+          }
+      - name: Toolchains present
+        run: |
+          for t in sqlite3 cc go cargo Rscript java node ruby; do
+            printf '%-8s %s\n' "$t" "$(command -v $t || echo MISSING)"
+          done
+      - name: Verify
+        run: ./verify/verify.sh
+      - name: The checks must reject a corrupted results file
+        run: |
+          cp results/stage2.csv "$RUNNER_TEMP/stage2.csv"
+          # move the pixel cFID at 50 NFE that the published median lands on
+          sed -i 's/^83\.7131357123202,/93.7131357123202,/' results/stage2.csv
+          if diff -q "$RUNNER_TEMP/stage2.csv" results/stage2.csv > /dev/null; then
+            echo "the corruption did not change the file, so this proves nothing"
+            exit 1
+          fi
+          if ./verify/verify.sh > "$RUNNER_TEMP/corrupt.log" 2>&1; then
+            echo "FAILURE: the checks passed on a corrupted results file"
+            tail -30 "$RUNNER_TEMP/corrupt.log"
+            exit 1
+          fi
+          echo "rejected as expected:"
+          grep -E 'FAIL|passed,' "$RUNNER_TEMP/corrupt.log" || true
+          cp "$RUNNER_TEMP/stage2.csv" results/stage2.csv
+          ./verify/verify.sh

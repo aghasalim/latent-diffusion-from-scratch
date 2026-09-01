@@ -137,6 +137,71 @@ next to the figures. It writes no CSV.
 
 MNIST is downloaded to `data/` on first use.
 
+## Everything here is computed twice
+
+Every number in this README came out of one implementation. The tables are one
+call to `statistics.median`, the quality numbers are one pass through
+`ldm/metrics.py`, and every sample in them came out of one sampler in
+`ldm/diffusion.py`. `scripts/check_numbers.py` looks for drift, but it
+recomputes the medians the same way the sweep did, so it agrees with itself by
+construction, and it says so in its own output: it does not check claims written
+in words. An error in the metric or in the sampler would move every quality
+number in both tables together and nothing would look wrong.
+
+So the published numbers are recomputed by eight more implementations in eight
+languages, from the seed level CSVs and from reference vectors dumped straight
+out of PyTorch, and CI fails if any two disagree. A mistake would have to be
+made identically in all of them to survive.
+
+| implementation | what it recomputes | measured agreement |
+| --- | --- | --- |
+| [`verify/export_golden.py`](verify/export_golden.py) | regenerates the reference vectors from `ldm/` and diffs them, so the goldens cannot go stale | byte identical |
+| [`verify/tables.sql`](verify/tables.sql) | both published tables, medians and rFID ranges, in SQLite | 7 rows, every cell found in the README |
+| [`verify/kernel.c`](verify/kernel.c) | the cosine schedule, the DDIM timestep subsequence and the DDIM update | schedule 5.0e-10, timesteps 50 of 50 exact, trajectory 2.9e-06 |
+| [`verify/gocheck`](verify/gocheck) | structure of both results files, then all 49 published table cells from the seed rows | 49 of 49 cells, exact |
+| [`verify/verify.R`](verify/verify.R) | the stage one argument written as prose: seed spreads, closest seed gaps, which rFID intervals overlap | exact at the quoted precision |
+| [`verify/slicedw2`](verify/slicedw2) | the sW2 kernel, then 800 more draws of it to put an error bar on it | relative 3.8e-09, and the noise below |
+| [`verify/Frechet.java`](verify/Frechet.java) | the cFID kernel, with its own Jacobi eigensolver rather than a library call | relative 6.2e-10 |
+| [`verify/ratios.mjs`](verify/ratios.mjs) | the four multiples in the headline sentence, which are in no results file | all four reproduce to the quoted decimal |
+| [`verify/methods_check.rb`](verify/methods_check.rb) | the second copy of the stage two table, in `notes/METHODS.md` | both copies identical to the data |
+
+Run them all with [`./verify/verify.sh`](verify/verify.sh), which prints how many
+passed, failed and were skipped. Each is skipped with a message if its toolchain
+is missing, so a partial install still runs the rest.
+
+**It found a wrong number.** The layout section said the suite had 33 tests. It
+collects 49. That is now asserted by a test rather than typed by hand.
+
+**The Rust answers a question I never asked.** sW2 is a Monte Carlo estimate
+over 128 random directions and I report it to four decimal places. Running the
+same kernel on 800 independent draws of 128 fresh directions, on the reference
+pair the exporter dumps, gives sd 0.0129 around a mean of 0.4145, which is about
+3.1% noise, and 20000 directions in one estimate land at 0.4125. So the fourth
+decimal of a published sW2 is not meaningful and the third is marginal. That
+was an assumption before; it is a measurement now.
+
+**The Ruby closes a hole in the existing checker.** `scripts/check_numbers.py`
+concatenates `README.md` and `notes/METHODS.md` before it searches, so a figure
+that is right in one file and stale in the other still passes it. I changed the
+f=8 sW2 cell in the `notes/METHODS.md` copy of the table and the checker still
+reported no drift. The Ruby compares the two copies against each other and
+against the data, and caught it.
+
+**The harness is itself checked.** CI corrupts a results file, requires the
+harness to reject it, restores it and requires a pass. A check that cannot fail
+is not evidence. Each implementation catches what it is responsible for and
+nothing more, which is what these perturbations measured:
+
+- moving the pixel cFID at 50 NFE that the median lands on: caught by SQL, Go and Ruby
+- moving a pixel training time: caught by SQL, Go, JavaScript and Ruby
+- moving one seed's PSNR without moving the median: caught by R alone
+- duplicating a seed row, a ragged row, a NaN in a column: caught by Go
+- one value in the golden schedule: caught by C
+- the golden Frechet value, or one golden projection direction: caught by Java and by Rust
+- the wall clock in `results/run-meta.json`: caught by JavaScript
+- the `notes/METHODS.md` copy of the table alone: caught by Ruby
+- changing the cosine schedule offset in `ldm/diffusion.py`: caught by the golden diff
+
 ## Layout
 
 ```
@@ -146,7 +211,8 @@ ldm/unet.py         epsilon predictor, identical in both spaces
 ldm/diffusion.py    cosine schedule, DDPM training, DDIM sampling
 ldm/metrics.py      cFID and sliced W2, both named for what they are
 experiments/main.py the sweep
-tests/              33 tests
+tests/              49 tests
+verify/             the same numbers, recomputed in eight other languages
 ```
 
 ## Sources

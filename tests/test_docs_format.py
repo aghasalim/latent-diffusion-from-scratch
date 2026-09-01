@@ -97,3 +97,17 @@ def test_plain_ascii_punctuation(path: Path):
     bad = [(n, c) for n, text in prose_lines(path)
            for c in text if c in "—–" or EMOJI.match(c)]
     assert not bad, f"{path.relative_to(ROOT)}: non-plain punctuation at {bad[:5]}"
+
+
+def test_readme_states_the_test_count(request):
+    """The layout section quotes a test count, which is stale the moment one is added.
+
+    It was wrong once already: the README said 33 while the suite collected 48.
+    A filtered run collects a subset, which is not the number the README quotes,
+    so this only asserts on a whole run.
+    """
+    if request.config.option.keyword or request.config.option.markexpr:
+        pytest.skip("filtered run, the collected count is not the suite size")
+    n = len(request.session.items)
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert f"{n} tests" in text, f"README does not say {n} tests"
