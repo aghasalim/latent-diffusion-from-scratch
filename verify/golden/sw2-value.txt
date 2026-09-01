@@ -1,0 +1,2 @@
+# ldm.metrics.sliced_w2 of the two above
+0.39873629808425903

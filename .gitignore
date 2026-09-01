@@ -18,3 +18,8 @@ data/
 
 # derived from a retrain, not a measurement, so it is rebuilt rather than committed
 results/denoise-frames.npz
+
+# build products from verify/, never committed
+verify/*/target/
+verify/gocheck/gocheck
+*.class
