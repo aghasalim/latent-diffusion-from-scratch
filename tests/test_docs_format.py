@@ -110,8 +110,10 @@ def test_readme_states_the_test_count(request):
     A filtered run collects a subset, which is not the number the README quotes,
     so this only asserts on a whole run.
     """
-    if request.config.option.keyword or request.config.option.markexpr:
-        pytest.skip("filtered run, the collected count is not the suite size")
+    collected_files = {item.path for item in request.session.items}
+    if (request.config.option.keyword or request.config.option.markexpr
+            or len(collected_files) < len(list(ROOT.glob("tests/test_*.py")))):
+        pytest.skip("partial run, the collected count is not the size of the suite")
     n = len(request.session.items)
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     assert f"{n} tests" in text, f"README does not say {n} tests"
