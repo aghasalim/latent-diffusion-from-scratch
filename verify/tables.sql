@@ -18,6 +18,10 @@
 .import --csv results/stage1.csv s1
 .import --csv results/stage2.csv s2
 
+-- printf('%.0f') does not round the same way on every sqlite build: the runner
+-- prints 670 where this laptop prints 671. The seconds columns therefore round
+-- with ROUND and cast to an integer, which does mean the same thing everywhere.
+--
 -- Everything arrives as text, so every comparison and every median casts first.
 -- Ordering strings would put 113.67 before 83.71 and quietly return the wrong
 -- middle value.
@@ -54,7 +58,7 @@ SELECT 'stage1|' || r.f
        || '|' || printf('%.2f', (SELECT v FROM med1 WHERE f = r.f AND metric = 'psnr')) || ' dB'
        || '|' || printf('%.3f', (SELECT v FROM med1 WHERE f = r.f AND metric = 'rfid'))
        || '|' || printf('%.3f', r.lo) || ' to ' || printf('%.3f', r.hi)
-       || '|' || printf('%.0f', (SELECT v FROM med1 WHERE f = r.f AND metric = 'wall_s')) || ' s'
+       || '|' || CAST(ROUND((SELECT v FROM med1 WHERE f = r.f AND metric = 'wall_s')) AS INT) || ' s'
 FROM range1 r ORDER BY r.f;
 
 CREATE TEMP VIEW long2 AS
@@ -78,7 +82,7 @@ CREATE TEMP VIEW models AS
 
 SELECT 'stage2|' || m.model
        || '|' || m.elems
-       || '|' || printf('%.0f', (SELECT v FROM med2 WHERE model = m.model AND metric = 'train_s')) || ' s'
+       || '|' || CAST(ROUND((SELECT v FROM med2 WHERE model = m.model AND metric = 'train_s')) AS INT) || ' s'
        || '|' || printf('%.2f', (SELECT v FROM med2 WHERE model = m.model AND metric = 'cfid' AND nfe = 10))
        || '|' || printf('%.2f', (SELECT v FROM med2 WHERE model = m.model AND metric = 'cfid' AND nfe = 25))
        || '|' || printf('%.2f', (SELECT v FROM med2 WHERE model = m.model AND metric = 'cfid' AND nfe = 50))

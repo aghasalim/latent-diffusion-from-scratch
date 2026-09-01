@@ -169,8 +169,13 @@ Run them all with [`./verify/verify.sh`](verify/verify.sh), which prints how man
 passed, failed and were skipped. Each is skipped with a message if its toolchain
 is missing, so a partial install still runs the rest.
 
-**It found a wrong number.** The layout section said the suite had 33 tests. It
-collects 49. That is now asserted by a test rather than typed by hand.
+**It found a wrong number, and then a reason it was hard to keep right.** The
+layout section said the suite had 33 tests; it collects 46. Writing the test
+that asserts that also turned up why the count moved: the markdown checks walked
+every `*.md` under the repository, which included the README that pytest writes
+into its own `.pytest_cache`, so the size of the suite depended on whether that
+cache existed. Dot directories are skipped now and the count is a property of
+the repository again.
 
 **The Rust answers a question I never asked.** sW2 is a Monte Carlo estimate
 over 128 random directions and I report it to four decimal places. Running the
@@ -211,7 +216,7 @@ ldm/unet.py         epsilon predictor, identical in both spaces
 ldm/diffusion.py    cosine schedule, DDPM training, DDIM sampling
 ldm/metrics.py      cFID and sliced W2, both named for what they are
 experiments/main.py the sweep
-tests/              49 tests
+tests/              46 tests
 verify/             the same numbers, recomputed in eight other languages
 ```
 

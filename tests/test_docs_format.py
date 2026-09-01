@@ -14,15 +14,19 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SKIP = {".venv", ".git", "node_modules", "site-packages"}
+SKIP = {"node_modules", "site-packages"}
 SEPARATOR = re.compile(r"^[\s:|-]+$")
 EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿]")
 
 
 def markdown_files() -> list[Path]:
+    # Dot directories are tool caches, not documents. .pytest_cache ships a
+    # README of its own, and letting it in made the size of this suite depend on
+    # whether the cache happened to exist.
     return sorted(
         p for p in ROOT.rglob("*.md")
         if not SKIP & set(p.parts) and "adapter" not in p.parts
+        and not any(part.startswith(".") for part in p.parts)
     )
 
 
@@ -102,7 +106,7 @@ def test_plain_ascii_punctuation(path: Path):
 def test_readme_states_the_test_count(request):
     """The layout section quotes a test count, which is stale the moment one is added.
 
-    It was wrong once already: the README said 33 while the suite collected 48.
+    It was wrong once already: the README said 33 while the suite collected 46.
     A filtered run collects a subset, which is not the number the README quotes,
     so this only asserts on a whole run.
     """
