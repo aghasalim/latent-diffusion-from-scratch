@@ -151,11 +151,14 @@ number in both tables together and nothing would look wrong.
 So the published numbers are recomputed by eight more implementations in eight
 languages, from the seed level CSVs and from reference vectors dumped straight
 out of PyTorch, and CI fails if any two disagree. A mistake would have to be
-made identically in all of them to survive.
+made identically in all of them to survive. The tolerances below are not
+decoration: the same kernels do not give bit identical answers on the x86 runner
+and on this laptop, so each check prints the difference it measured next to the
+tolerance it was allowed.
 
 | implementation | what it recomputes | measured agreement |
 | --- | --- | --- |
-| [`verify/check_golden.py`](verify/check_golden.py) | runs all four kernels in `ldm/` again on the reference inputs, so the goldens the other checks trust cannot go stale | exact here, 0.0e+00 on all five |
+| [`verify/check_golden.py`](verify/check_golden.py) | runs all four kernels in `ldm/` again on the reference inputs, so the goldens the other checks trust cannot go stale | 0.0e+00 on all five here, worst 3.6e-07 on the CI runner |
 | [`verify/tables.sql`](verify/tables.sql) | both published tables, medians and rFID ranges, in SQLite | 7 rows, every cell found in the README |
 | [`verify/kernel.c`](verify/kernel.c) | the cosine schedule, the DDIM timestep subsequence and the DDIM update | schedule 5.0e-10, timesteps 50 of 50 exact, trajectory 2.9e-06 |
 | [`verify/gocheck`](verify/gocheck) | structure of both results files, then all 49 published table cells from the seed rows | 49 of 49 cells, exact |
