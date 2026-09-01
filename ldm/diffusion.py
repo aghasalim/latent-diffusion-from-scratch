@@ -44,15 +44,20 @@ class Diffusion:
 
     @torch.no_grad()
     def ddim_sample(self, model, shape, nfe: int = 50, eta: float = 0.0,
-                    generator=None, device="cpu", callback=None):
+                    generator=None, device="cpu", callback=None, x_T=None):
         """Deterministic DDIM by default. NFE is exactly `nfe` model calls.
 
         callback(i, t, x0, x) is called after every step if given. It exists so
         the animation in bench/figures.py can watch the trajectory without a
         second copy of this loop drifting away from the one the results use.
+
+        x_T replaces the starting noise. torch.randn does not give the same
+        draw on every CPU architecture, so the check in verify/ hands this the
+        starting point it has on file rather than trying to redraw it.
         """
         steps = torch.linspace(self.T - 1, 0, nfe).long()
-        x = torch.randn(shape, generator=generator, device=device)
+        x = torch.randn(shape, generator=generator, device=device) if x_T is None \
+            else x_T.to(device).clone()
         for i, t in enumerate(steps):
             tb = torch.full((shape[0],), int(t), dtype=torch.long, device=device)
             eps = model(x, tb)

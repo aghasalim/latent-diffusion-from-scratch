@@ -23,6 +23,11 @@ It rewrites verify/golden/. The inputs are printed at 9 significant digits,
 which round trips float32 exactly. The two reference values are float64 and are
 printed at 17, so a reimplementation is held against the value and not against
 the rounding of the file it reads.
+
+This is run once and the result is committed. It is not rerun as a check:
+torch.randn does not give the same draw on every CPU architecture, so the same
+seed produces different inputs on a different machine. verify/check_golden.py is
+the check, and it reads the inputs from the files rather than redrawing them.
 """
 from __future__ import annotations
 
