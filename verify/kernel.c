@@ -21,6 +21,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* glibc hides M_PI under -std=c99, so carry the constant rather than reaching
+ * for a feature test macro. */
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #define T_STEPS 400
 #define NFE 50
 #define SAMPLES 4
