@@ -155,7 +155,7 @@ made identically in all of them to survive.
 
 | implementation | what it recomputes | measured agreement |
 | --- | --- | --- |
-| [`verify/export_golden.py`](verify/export_golden.py) | regenerates the reference vectors from `ldm/` and diffs them, so the goldens cannot go stale | byte identical |
+| [`verify/check_golden.py`](verify/check_golden.py) | runs all four kernels in `ldm/` again on the reference inputs, so the goldens the other checks trust cannot go stale | exact here, 0.0e+00 on all five |
 | [`verify/tables.sql`](verify/tables.sql) | both published tables, medians and rFID ranges, in SQLite | 7 rows, every cell found in the README |
 | [`verify/kernel.c`](verify/kernel.c) | the cosine schedule, the DDIM timestep subsequence and the DDIM update | schedule 5.0e-10, timesteps 50 of 50 exact, trajectory 2.9e-06 |
 | [`verify/gocheck`](verify/gocheck) | structure of both results files, then all 49 published table cells from the seed rows | 49 of 49 cells, exact |
@@ -205,7 +205,7 @@ nothing more, which is what these perturbations measured:
 - the golden Frechet value, or one golden projection direction: caught by Java and by Rust
 - the wall clock in `results/run-meta.json`: caught by JavaScript
 - the `notes/METHODS.md` copy of the table alone: caught by Ruby
-- changing the cosine schedule offset in `ldm/diffusion.py`: caught by the golden diff
+- changing the cosine schedule offset, the DDIM update or the Frechet formula in `ldm/`: caught by the golden check
 
 ## Layout
 

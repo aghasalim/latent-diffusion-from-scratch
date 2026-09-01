@@ -40,24 +40,18 @@ run () {
 # number. Rebuilt once and reused by the checks that grep for a table row.
 sed 's/\*\*//g' README.md > "$tmp/readme-plain.md"
 
-# The golden vectors are only evidence if they still come out of the current
-# ldm/. This regenerates them into a temporary directory and diffs, rather than
-# over the top of the committed ones, so a drifted kernel cannot be hidden by
-# the check that is supposed to find it.
+# The golden vectors are the fixed point the C, Java and Rust checks are all
+# measured against, so they are only evidence while ldm/ still lands on them.
+# This reruns the four kernels on the inputs already on file and compares
+# values. It cannot compare files: torch.randn does not draw the same numbers on
+# every CPU architecture, so regenerating them elsewhere is not the same test.
 PY="${PYTHON:-python3}"
 check_python () {
     if ! "$PY" -c "import torch" >/dev/null 2>&1; then
         printf 'skipped: %s has no torch\n' "$PY"
         return 2
     fi
-    "$PY" verify/export_golden.py "$tmp/golden" >/dev/null || return 1
-    if diff -r "$tmp/golden" verify/golden > "$tmp/golden.diff"; then
-        echo "verify/golden/ is exactly what ldm/diffusion.py and ldm/metrics.py produce today"
-        return 0
-    fi
-    echo "verify/golden/ no longer matches ldm/:"
-    head -20 "$tmp/golden.diff"
-    return 1
+    "$PY" verify/check_golden.py "$root"
 }
 
 # SQL prints each table row in a canonical form and this requires it in the
@@ -93,7 +87,7 @@ check_rust () { ( cd verify/slicedw2 && cargo run --release --quiet -- "$root" )
 
 check_java () { java verify/Frechet.java "$root"; }
 
-run "Python, golden vectors still match ldm/" "$PY"     check_python
+run "Python, ldm/ still lands on the goldens" "$PY"      check_python
 run "SQL, both published tables"              sqlite3   check_sql
 run "C, cosine schedule and DDIM"             cc        check_c
 run "Go, results files and table cells"       go        check_go

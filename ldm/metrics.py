@@ -79,12 +79,18 @@ def cfid(featurizer, real: torch.Tensor, fake: torch.Tensor) -> float:
 
 
 def sliced_w2(a: torch.Tensor, b: torch.Tensor, n_proj: int = 128, seed: int = 0,
-              n_quantiles: int = 256) -> float:
-    """Compared on a shared quantile grid so unequal sample counts are fine."""
-    g = torch.Generator().manual_seed(seed)
+              n_quantiles: int = 256, dirs: torch.Tensor | None = None) -> float:
+    """Compared on a shared quantile grid so unequal sample counts are fine.
+
+    dirs replaces the random projections. The draw is not identical on every CPU
+    architecture, so the check in verify/ passes the directions it has on file
+    and holds the rest of the kernel to a fixed answer.
+    """
     a, b = a.flatten(1), b.flatten(1)
-    dirs = torch.randn(n_proj, a.shape[1], generator=g)
-    dirs = dirs / dirs.norm(dim=1, keepdim=True)
+    if dirs is None:
+        g = torch.Generator().manual_seed(seed)
+        dirs = torch.randn(n_proj, a.shape[1], generator=g)
+        dirs = dirs / dirs.norm(dim=1, keepdim=True)
     pa = (a @ dirs.T).sort(dim=0).values
     pb = (b @ dirs.T).sort(dim=0).values
     q = torch.linspace(0, 1, n_quantiles)

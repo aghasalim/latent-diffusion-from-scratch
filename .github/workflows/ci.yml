@@ -23,10 +23,8 @@ jobs:
         run: python -m pytest tests/ -q
       - name: Check quoted numbers against results/
         run: python scripts/check_numbers.py
-      - name: Golden vectors still match ldm/
-        run: |
-          python verify/export_golden.py "$RUNNER_TEMP/golden" > /dev/null
-          diff -r "$RUNNER_TEMP/golden" verify/golden
+      - name: ldm/ still lands on the golden values
+        run: python verify/check_golden.py
 
   differential:
     # Recompute the published numbers in eight other languages and require them
