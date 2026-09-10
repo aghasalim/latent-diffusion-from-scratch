@@ -87,15 +87,25 @@ never land on a digit. That is what a cFID of 13.59 looks like up close.
 
 ![cost breakdown](results/cost-breakdown.png)
 
-Full detail in [notes/METHODS.md](notes/METHODS.md#stage-two-quality-against-cost).
+The rest of the cost accounting sits in
+[notes/METHODS.md](notes/METHODS.md#stage-two-quality-against-cost).
+
 ## Metrics, named honestly
-Standard FID uses InceptionV3 features trained on ImageNet, which is the wrong feature extractor for 32x32 grayscale digits, and pulling it in would produce a number that does not mean what its name implies.
 
-Full detail in [notes/METHODS.md](notes/METHODS.md#metrics-named-honestly).
+Standard FID uses InceptionV3 features trained on ImageNet, which is the wrong
+feature extractor for 32x32 grayscale digits, and pulling it in would produce a
+number that does not mean what its name implies. So the metrics here carry the
+names of what they actually measure: why, and on which features, is set out in
+[notes/METHODS.md](notes/METHODS.md#metrics-named-honestly).
+
 ## What I got wrong
-**The UNet skip connections were misaligned and I did not notice from the shapes.** The first version reconstructed skip channel counts from the multiplier list rather than recording them on the way down.
 
-Full detail in [notes/METHODS.md](notes/METHODS.md#what-i-got-wrong).
+**The UNet skip connections were misaligned and I did not notice from the
+shapes.** The first version reconstructed skip channel counts from the
+multiplier list rather than recording them on the way down. The whole debugging
+trail, including how long it took me to look in the right place, is written
+up under [notes/METHODS.md](notes/METHODS.md#what-i-got-wrong).
+
 ## Limitations
 
 - No perceptual or adversarial loss in stage one. The paper uses both, and their
@@ -129,8 +139,9 @@ python -m bench.figures
 The sweep takes about 100 minutes on an M4 CPU and writes `results/stage1.csv`
 and `results/stage2.csv`. The plots read those files and never re-run an
 experiment, so a plot cannot disagree with a number in this README. Every
-published number is also recomputed from the seed level CSVs by the
-implementations in `verify/`, and CI fails if any of them disagrees.
+published number is also rebuilt from the seed-level CSVs by the
+reimplementations under `verify/`. When one of them lands somewhere else, CI
+stops the merge.
 
 The animation is the one exception, because a sampling trajectory is not in a
 table. It retrains the f=4 pair at seed 0 with the settings recorded in
@@ -149,7 +160,7 @@ ldm/diffusion.py    cosine schedule, DDPM training, DDIM sampling
 ldm/metrics.py      cFID and sliced W2, both named for what they are
 experiments/main.py the sweep
 tests/              33 tests
-verify/             the same numbers, recomputed independently
+verify/             the published tables, rebuilt in other languages
 ```
 
 ## Sources
@@ -162,29 +173,16 @@ verify/             the same numbers, recomputed independently
 - **Heusel, Ramsauer, Unterthiner, Nessler, Hochreiter. GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium. NeurIPS 2017.** [arXiv:1706.08500](https://arxiv.org/abs/1706.08500) The FID formula, applied here to different features and renamed accordingly.
 - MNIST from the CVDF mirror of LeCun's dataset.
 
-Related: [rectified-flow-from-scratch](https://github.com/aghasalim/rectified-flow-from-scratch)
-is the same generative problem with a straight interpolant instead of a diffusion path.
+The same generative problem, with a straight interpolant in place of the
+diffusion path, is in
+[rectified-flow-from-scratch](https://github.com/aghasalim/rectified-flow-from-scratch).
 
 ## Methodology
 
-The rules this follows are in [`METHODOLOGY.md`](METHODOLOGY.md). Rule 8, no number that did not
-come from a measurement, and rule 15, say what was not measured, are why the
-limitations section is as long as it is.
-
-## Author
-
-Aghasalim Mustafazada, third year AI student at Howest, Belgium.
-
-<p align="center">
-  <a href="https://github.com/aghasalim">
-    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="github"></a>
-  <a href="https://www.kaggle.com/aghasalimmustafazada">
-    <img src="https://img.shields.io/badge/Kaggle-20BEFF?style=for-the-badge&logo=kaggle&logoColor=white" alt="kaggle"></a>
-  <a href="https://linkedin.com/in/mustafazada">
-    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="linkedin"></a>
-  <a href="https://orcid.org/0009-0001-8746-4582">
-    <img src="https://img.shields.io/badge/ORCID-A6CE39?style=for-the-badge&logo=orcid&logoColor=white" alt="orcid"></a>
-</p>
+[`METHODOLOGY.md`](METHODOLOGY.md) is the standing rule set for this repo.
+Rule 8, no number that did not come from a measurement, and rule 15, say what
+was not measured, are between them why the limitations section runs as long as
+it does.
 
 ## License
 
