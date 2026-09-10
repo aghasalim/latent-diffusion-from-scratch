@@ -137,7 +137,8 @@ python -m bench.figures
 ```
 
 The sweep takes about 100 minutes on an M4 CPU and writes `results/stage1.csv`
-and `results/stage2.csv`. The plots read those files and never re-run an
+and `results/stage2.csv`. The settings it ran with, traced line by line to the
+code and the data, are in [notes/SWEEP.md](notes/SWEEP.md). The plots read those files and never re-run an
 experiment, so a plot cannot disagree with a number in this README. Every
 published number is also rebuilt from the seed-level CSVs by the
 reimplementations under `verify/`. When one of them lands somewhere else, CI
