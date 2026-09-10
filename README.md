@@ -148,7 +148,7 @@ ldm/unet.py         epsilon predictor, identical in both spaces
 ldm/diffusion.py    cosine schedule, DDPM training, DDIM sampling
 ldm/metrics.py      cFID and sliced W2, both named for what they are
 experiments/main.py the sweep
-tests/              46 tests
+tests/              33 tests
 verify/             the same numbers, recomputed independently
 ```
 
