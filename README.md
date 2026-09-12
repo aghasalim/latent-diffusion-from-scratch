@@ -181,7 +181,7 @@ diffusion path, is in
 ## Methodology
 
 [`METHODOLOGY.md`](METHODOLOGY.md) is the standing rule set for this repo.
-Rule 8, no number that did not come from a measurement, and rule 15, say what
+Rule 6, no number that did not come from a measurement, and rule 13, say what
 was not measured, are between them why the limitations section runs as long as
 it does.
 
