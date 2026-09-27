@@ -45,7 +45,7 @@ rFID is reconstruction quality measured in the same feature space as the
 generation metric. It is the floor: no model trained on top of this autoencoder
 can produce samples better than the autoencoder's own reconstructions.
 
-**The range column is the reason this section makes only one claim.** PSNR
+The range column is the reason this section makes only one claim. PSNR
 spans 0.73 dB across seeds at f=2, 0.20 dB at f=4 and 0.14 dB at f=8. The f=2
 spread is the widest of the three. The levels are still 5.8 dB and 4.8 dB apart
 at their closest seeds, so the distortion ordering is solid. rFID is not: at
@@ -56,7 +56,7 @@ would be wrong to read the medians 0.023 and 0.034 as a rise.
 f=8 is a different matter. Its range, 0.078 to 0.172, does not overlap f=2's at
 all, so the floor genuinely rises there, and that is where compression starts to
 cost something real. One claim, and the numbers that support it are in the table
-rather than behind a median.
+instead of behind a median.
 
 f=2 is a useful control. It has four latent channels at half resolution, which
 works out to 1.0x compression, so it is a latent space that is not actually
@@ -100,9 +100,9 @@ names of what they actually measure: why, and on which features, is set out in
 
 ## What I got wrong
 
-**The UNet skip connections were misaligned and I did not notice from the
-shapes.** The first version reconstructed skip channel counts from the
-multiplier list rather than recording them on the way down. The whole debugging
+The UNet skip connections were misaligned and I did not notice from the
+shapes. The first version reconstructed skip channel counts from the
+multiplier list instead of recording them on the way down. The whole debugging
 trail, including how long it took me to look in the right place, is written
 up under [notes/METHODS.md](notes/METHODS.md#what-i-got-wrong).
 
