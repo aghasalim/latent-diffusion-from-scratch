@@ -4,6 +4,7 @@
 [![python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![results](https://img.shields.io/badge/results-reproducible-1a9850.svg)](results/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23003654.svg)](https://doi.org/10.5281/zenodo.23003654)
 
 A KL-regularised autoencoder, a DDPM, and the comparison the LDM paper is about:
 running diffusion in a compressed latent, not in pixels. MNIST at 32x32 on
