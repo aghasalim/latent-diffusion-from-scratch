@@ -6,7 +6,7 @@
 [![results](https://img.shields.io/badge/results-reproducible-1a9850.svg)](results/)
 
 A KL-regularised autoencoder, a DDPM, and the comparison the LDM paper is about:
-running diffusion in a compressed latent instead of in pixels. MNIST at 32x32 on
+running diffusion in a compressed latent, not in pixels. MNIST at 32x32 on
 a laptop CPU, three seeds, about 100 minutes end to end.
 
 The headline: at a matched step count, diffusion in a 4x compressed latent
@@ -55,8 +55,7 @@ would be wrong to read the medians 0.023 and 0.034 as a rise.
 
 f=8 is a different matter. Its range, 0.078 to 0.172, does not overlap f=2's at
 all, so the floor genuinely rises there, and that is where compression starts to
-cost something real. One claim, and the numbers that support it are in the table
-instead of behind a median.
+cost something real. One claim, and every number that supports it is in the table.
 
 f=2 is a useful control. It has four latent channels at half resolution, which
 works out to 1.0x compression, so it is a latent space that is not actually
@@ -101,8 +100,7 @@ names of what they actually measure: why, and on which features, is set out in
 ## What I got wrong
 
 The UNet skip connections were misaligned and I did not notice from the
-shapes. The first version reconstructed skip channel counts from the
-multiplier list instead of recording them on the way down. The whole debugging
+shapes. The first version reconstructed skip channel counts from the multiplier list when it should have recorded them on the way down. The whole debugging
 trail, including how long it took me to look in the right place, is written
 up under [notes/METHODS.md](notes/METHODS.md#what-i-got-wrong).
 
