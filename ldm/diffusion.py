@@ -3,9 +3,10 @@
 Forward process: x_t = sqrt(abar_t) x_0 + sqrt(1 - abar_t) eps, with a cosine
 schedule. The model predicts eps and the loss is a plain MSE on it.
 
-Sampling supports the full ancestral DDPM chain and the deterministic DDIM
-subsequence, because the whole cost comparison in this repo is about number of
-function evaluations and DDIM is what makes a small NFE budget meaningful.
+Sampling is DDIM over a subsequence of nfe steps: deterministic at eta=0, and
+at eta=1 with nfe=T it reduces to the ancestral DDPM chain. The whole cost
+comparison in this repo is about number of function evaluations, and DDIM is
+what makes a small NFE budget meaningful.
 
 Nothing here knows about images. That is what lets the identical object run in
 pixel space for the baseline and in latent space for the LDM.
