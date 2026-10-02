@@ -28,6 +28,9 @@ def cosine_schedule(T: int, s: float = 0.008) -> torch.Tensor:
 
 
 class Diffusion:
+    """Cosine schedule DDPM: q_sample noises x0 to step t, loss is the eps MSE,
+    ddim_sample draws with exactly nfe model calls."""
+
     def __init__(self, T: int = 400):
         self.T = T
         self.abar = cosine_schedule(T)
