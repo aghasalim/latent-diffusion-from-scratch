@@ -56,7 +56,8 @@ def load(n: int | None = None, seed: int = 0):
     return x[:cut], x[cut:]
 
 
-def labels(n: int | None = None, seed: int = 0):
+def labels(n: int | None = None, seed: int = 0) -> torch.Tensor:
+    """Digit labels in the same seeded order as load(), before its train/val split."""
     ensure_data()
     with gzip.open(ROOT / "data" / "train-labels-idx1-ubyte.gz") as f:
         raw = np.frombuffer(f.read(), np.uint8, offset=8)
