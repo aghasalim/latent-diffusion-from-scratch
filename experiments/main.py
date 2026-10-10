@@ -109,9 +109,9 @@ def main() -> int:
 
     RESULTS.mkdir(exist_ok=True)
     train, val = load(args.n)
-    y = labels(args.n)[:train.shape[0]]
-    feat, acc = train_featurizer(train, y, steps=1500)
-    print(f"featurizer accuracy {acc:.3f} (cFID feature space)")
+    y = labels(args.n)
+    feat, acc = train_featurizer(train, y[:train.shape[0]], val, y[train.shape[0]:], steps=1500)
+    print(f"featurizer validation accuracy {acc:.3f} (cFID feature space)")
 
     stage1, stage2, started = [], [], time.perf_counter()
     real = val[:args.eval_n] if val.shape[0] >= args.eval_n else val
@@ -155,7 +155,7 @@ def main() -> int:
             w.writerows(rows)
         print(f"wrote {p.relative_to(ROOT)} ({len(rows)} rows)")
     (RESULTS / "run-meta.json").write_text(json.dumps({
-        **vars(args), "featurizer_acc": acc,
+        **vars(args), "featurizer_val_acc": acc,
         "wall_clock_s": time.perf_counter() - started,
         "torch": torch.__version__, "device": "cpu"}, indent=1))
     print(f"total {time.perf_counter() - started:.1f}s")

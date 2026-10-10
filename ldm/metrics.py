@@ -39,7 +39,8 @@ class Featurizer(nn.Module):
         return self.body(x)
 
 
-def train_featurizer(x, y, steps=600, batch=256, lr=1e-3, seed=0):
+def train_featurizer(x, y, x_val, y_val, steps=600, batch=256, lr=1e-3, seed=0):
+    """Train on (x, y); the returned accuracy is on the held-out (x_val, y_val)."""
     torch.manual_seed(seed)
     m = Featurizer()
     opt = torch.optim.Adam(m.parameters(), lr)
@@ -54,7 +55,7 @@ def train_featurizer(x, y, steps=600, batch=256, lr=1e-3, seed=0):
     for p in m.parameters():
         p.requires_grad_(False)
     with torch.no_grad():
-        acc = (m(x[:2000]).argmax(-1) == y[:2000]).float().mean().item()
+        acc = (m(x_val).argmax(-1) == y_val).float().mean().item()
     return m, acc
 
 

@@ -19,3 +19,8 @@
 **Tried:** nothing, this is a note about the design.
 **Measured:** a training step on 64 elements is far cheaper than one on 1024, and the tables hold step count fixed rather than wall clock.
 **Concluded:** matched steps is the standard way to isolate "where does diffusion happen" from "how much compute did you spend", but it does flatter the latent models. A matched wall clock run would give the pixel baseline 5 to 15 times more steps and is the fairer test of whether the latent space is genuinely better as opposed to merely cheaper. I did not run it, the README says so, and it is the first thing I would do next.
+
+## 2026-10-11, the featurizer accuracy was measured on its own training images
+**Tried:** checked where the 94.5% featurizer accuracy in METHODS comes from.
+**Measured:** `train_featurizer` scored the first 2000 rows of the set it had just trained on. I added `scripts/featurizer_acc.py`, which retrains the same seeded featurizer, confirms it lands on the recorded 0.9450 on those rows, and scores it on the 750 validation images instead: 0.9387, written to `results/featurizer.json`.
+**Concluded:** the feature space is the same, so no cFID number moves, but the accuracy METHODS quotes goes from 94.5% to 93.9%. `train_featurizer` now takes the validation set and reports accuracy on it, so the next sweep records the held-out figure in `run-meta.json` as `featurizer_val_acc`.

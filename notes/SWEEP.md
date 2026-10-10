@@ -99,13 +99,16 @@ Fixed in the code rather than on the command line:
 | gradient clip | 1.0 | `experiments/main.py:46`, `:77` |
 | latent scaling | 1 / std of the encoded training set | `experiments/main.py:62` |
 | featurizer steps | 1500 | `experiments/main.py:113`, overriding the 600 at `ldm/metrics.py:42` |
-| featurizer eval set | first 2000 training images | `ldm/metrics.py:57` |
+| featurizer eval set | first 2000 training images in this run; the validation set since 2026-10-11 | `ldm/metrics.py:58` |
 | train / val split | 95 / 5 | `ldm/data.py:55` |
 
 With `n` = 15000 that split is 14250 training images and 750 validation images,
 so `eval_n` = 750 is the whole validation set, and the real side of every cFID
 is the same 750 images for every row. The featurizer landed on 0.945 accuracy,
-`featurizer_acc` in `run-meta.json`.
+`featurizer_acc` in `run-meta.json`, but that was measured on its own training
+images. On the 750 validation images it gets 0.939 (`results/featurizer.json`,
+from `scripts/featurizer_acc.py`, which retrains the same seeded featurizer and
+checks it reproduces the 0.945 first).
 
 ## What it wrote
 

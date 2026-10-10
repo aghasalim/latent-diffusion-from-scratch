@@ -10,8 +10,8 @@
 # This rebuilds the table from results/stage2.csv a fourth time, in Ruby, and
 # requires the copy in notes/METHODS.md to match the copy in README.md cell for
 # cell as well as matching the data. It also checks the two figures METHODS.md
-# quotes in prose and the featuriser accuracy, which lives in run-meta.json and
-# is quoted nowhere else.
+# quotes in prose and the featuriser's validation accuracy, which lives in
+# results/featurizer.json (scripts/featurizer_acc.py) and is quoted nowhere else.
 #
 # Ruby 2.6 opens files as US-ASCII, so every read names its encoding.
 
@@ -38,7 +38,7 @@ def median(v)
 end
 
 s2 = CSV.read(File.join(root, "results", "stage2.csv"), headers: true)
-meta = JSON.parse(read_text(File.join(root, "results", "run-meta.json")))
+feat = JSON.parse(read_text(File.join(root, "results", "featurizer.json")))
 readme = table_rows(File.join(root, "README.md"))
 methods_path = File.join(root, "notes", "METHODS.md")
 methods = table_rows(methods_path)
@@ -83,11 +83,11 @@ failures += 1 unless ok
 puts format("  %-42s METHODS.md says %-18s %s",
             "the pixel cFID falls across budgets", sentence, ok ? "ok" : "FAIL, not found")
 
-acc = format("%.1f%%", meta["featurizer_acc"] * 100)
+acc = format("%.1f%%", feat["val_acc"] * 100)
 ok = methods_text.include?(acc)
 failures += 1 unless ok
 puts format("  %-42s METHODS.md says %-18s %s",
-            "featuriser accuracy, from run-meta.json", acc, ok ? "ok" : "FAIL, not found")
+            "featuriser accuracy, featurizer.json", acc, ok ? "ok" : "FAIL, not found")
 
 # The element counts the argument about cost rests on.
 elems = s2.map { |r| [r["model"], r["latent_elems"]] }.uniq.to_h
