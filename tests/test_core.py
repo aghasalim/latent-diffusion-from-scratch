@@ -5,7 +5,7 @@ import torch
 from ldm.autoencoder import AutoEncoder, psnr
 from ldm.data import load
 from ldm.diffusion import Diffusion, cosine_schedule
-from ldm.metrics import Featurizer, cfid, sliced_w2
+from ldm.metrics import Featurizer, cfid, sliced_w2, train_featurizer
 from ldm.unet import UNet
 
 
@@ -212,3 +212,12 @@ def test_sliced_w2_is_sample_size_independent(na, nb):
 def test_sliced_w2_zero_on_identical_input():
     x = torch.randn(200, 1, 8, 8)
     assert sliced_w2(x, x) < 1e-5
+
+
+def test_featurizer_accuracy_is_on_the_held_out_set():
+    # The accuracy used to come from the featurizer's own training rows. Labels no
+    # digit can have make any held-out score other than 0 impossible.
+    g = torch.Generator().manual_seed(0)
+    x, y = torch.randn(64, 1, 32, 32, generator=g), torch.randint(0, 10, (64,), generator=g)
+    _, acc = train_featurizer(x, y, x[:16], torch.full((16,), -1), steps=5, batch=16)
+    assert acc == 0.0

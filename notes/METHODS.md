@@ -47,7 +47,8 @@ number that does not mean what its name implies. So this repo reports two things
 and calls them what they are:
 
 - **cFID**: the FID formula in the feature space of a small CNN trained here to
-  classify MNIST, which reaches 94.5% accuracy. Comparable within this repo,
+  classify MNIST, which reaches 93.9% accuracy on the 750 held-out validation
+  images (`results/featurizer.json`). Comparable within this repo,
   not comparable to any published FID.
 - **sW2**: sliced 2-Wasserstein in raw pixel space, no learned features at all.
 
