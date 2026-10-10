@@ -48,7 +48,8 @@ class Diffusion:
 
     @torch.no_grad()
     def ddim_sample(self, model, shape, nfe: int = 50, eta: float = 0.0,
-                    generator=None, device="cpu", callback=None, x_T=None):
+                    generator=None, device="cpu", callback=None, x_T=None,
+                    clip_x0: float | None = 3.0):
         """Deterministic DDIM by default. NFE is exactly `nfe` model calls.
 
         callback(i, t, x0, x) is called after every step if given. It exists so
@@ -58,6 +59,13 @@ class Diffusion:
         x_T replaces the starting noise. torch.randn does not give the same
         draw on every CPU architecture, so the check in verify/ hands this the
         starting point it has on file rather than trying to redraw it.
+
+        clip_x0 bounds the predicted x0 to [-clip_x0, clip_x0], None for no
+        clip. The default of 3 is what every result in results/ used, in both
+        spaces. Pixel data lives in [-1, 1], so for the pixel model 3 is a much
+        looser clip than the data range, while the latents are scaled to unit
+        std, so for them 3 is three standard deviations. Pass 1.0 for pixels to
+        clip at the data range.
         """
         steps = torch.linspace(self.T - 1, 0, nfe).long()
         x = torch.randn(shape, generator=generator, device=device) if x_T is None \
@@ -67,7 +75,9 @@ class Diffusion:
             eps = model(x, tb)
             a_t = self.abar[t]
             a_prev = self.abar[steps[i + 1]] if i + 1 < len(steps) else torch.tensor(1.0)
-            x0 = ((x - (1 - a_t).sqrt() * eps) / a_t.sqrt()).clamp(-3, 3)
+            x0 = (x - (1 - a_t).sqrt() * eps) / a_t.sqrt()
+            if clip_x0 is not None:
+                x0 = x0.clamp(-clip_x0, clip_x0)
             sigma = eta * ((1 - a_prev) / (1 - a_t)).sqrt() * (1 - a_t / a_prev).sqrt()
             dir_xt = (1 - a_prev - sigma ** 2).clamp(min=0).sqrt() * eps
             x = a_prev.sqrt() * x0 + dir_xt

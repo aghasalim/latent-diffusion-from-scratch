@@ -79,3 +79,14 @@ than a step on 1024. A matched wall clock comparison would give the pixel model
 5 to 15 times more steps and would be the fairer test of "is the latent space
 better" as opposed to "is it cheaper". I did not run it and the tables should be
 read with that in mind.
+
+**The DDIM x0 clip is the same number in two different spaces.** Every sample
+in `results/` clipped the predicted x0 to [-3, 3] (`clip_x0` in
+`ldm/diffusion.py`, default 3). For the latents, which are scaled to unit std,
+that is three standard deviations. For pixels, which live in [-1, 1], it is three
+times looser than the data range, and pixel DDIM is usually clipped at the data
+range because that is what keeps a few-step sample from overshooting. So the
+pixel baseline ran with less help from the clip than it would normally get, which
+again leans towards the latent models, most at 10 NFE. I have not rerun the sweep
+with `clip_x0=1.0` for the pixel model, so I cannot say how much of the gap this
+is, and the tables should be read with it in mind too.

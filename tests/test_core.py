@@ -221,3 +221,18 @@ def test_featurizer_accuracy_is_on_the_held_out_set():
     x, y = torch.randn(64, 1, 32, 32, generator=g), torch.randint(0, 10, (64,), generator=g)
     _, acc = train_featurizer(x, y, x[:16], torch.full((16,), -1), steps=5, batch=16)
     assert acc == 0.0
+
+
+def test_ddim_clip_x0_is_a_per_call_bound():
+    torch.manual_seed(0)
+    net, d = UNet(channels=1), Diffusion(200)
+
+    def peak(**kw):
+        seen = []
+        d.ddim_sample(net, (2, 1, 32, 32), nfe=4, x_T=torch.randn(2, 1, 32, 32),
+                      callback=lambda i, t, x0, x: seen.append(x0.abs().max().item()), **kw)
+        return max(seen)
+
+    assert peak() <= 3.0                 # the default every result used
+    assert peak(clip_x0=1.0) <= 1.0      # the pixel data range
+    assert peak(clip_x0=None) > 3.0      # unclipped, x0 at t near T is far out
