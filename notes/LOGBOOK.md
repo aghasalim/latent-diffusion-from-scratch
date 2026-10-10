@@ -24,3 +24,8 @@
 **Tried:** checked where the 94.5% featurizer accuracy in METHODS comes from.
 **Measured:** `train_featurizer` scored the first 2000 rows of the set it had just trained on. I added `scripts/featurizer_acc.py`, which retrains the same seeded featurizer, confirms it lands on the recorded 0.9450 on those rows, and scores it on the 750 validation images instead: 0.9387, written to `results/featurizer.json`.
 **Concluded:** the feature space is the same, so no cFID number moves, but the accuracy METHODS quotes goes from 94.5% to 93.9%. `train_featurizer` now takes the validation set and reports accuracy on it, so the next sweep records the held-out figure in `run-meta.json` as `featurizer_val_acc`.
+
+## 2026-10-11, the x0 clip was the same in pixel and latent space
+**Tried:** read the DDIM loop again after noticing the clamp to [-3, 3] is hard-coded.
+**Measured:** nothing new. The sweep behind `results/` used that one clip for both spaces, and pixels only go from -1 to 1.
+**Concluded:** the clip is now a `clip_x0` argument, default 3 so every published number still comes from the code as it is. METHODS says the pixel baseline got a looser clip than usual, which is another thing that leans towards the latent models. The fair version is a rerun with `clip_x0=1.0` for pixels, which I have not done.
