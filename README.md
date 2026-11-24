@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/banner.jpg" alt="Line drawing of a row of squares going from noise to a clear shape through a narrow bottleneck" width="100%"></p>
+
 # latent-diffusion-from-scratch
 
 [![ci](https://github.com/aghasalim/latent-diffusion-from-scratch/actions/workflows/ci.yml/badge.svg)](https://github.com/aghasalim/latent-diffusion-from-scratch/actions/workflows/ci.yml)
@@ -16,6 +18,24 @@ trained 5.3x faster than the pixel baseline. Its samples also came out 6.2x bett
 At 16x compression it was 15.3x faster and still 5.1x better.
 
 ![quality against cost](results/quality-vs-cost.png)
+
+<details>
+<summary>Contents</summary>
+
+- [The claim being tested](#the-claim-being-tested)
+- [Stage one: what the autoencoder costs](#stage-one-what-the-autoencoder-costs)
+- [Stage two: quality against cost](#stage-two-quality-against-cost)
+- [Metrics, named honestly](#metrics-named-honestly)
+- [What I got wrong](#what-i-got-wrong)
+- [Limitations](#limitations)
+- [Running it](#running-it)
+- [Layout](#layout)
+- [Sources](#sources)
+- [Methodology](#methodology)
+- [Citation](#citation)
+- [License](#license)
+
+</details>
 
 ## The claim being tested
 
@@ -186,6 +206,21 @@ diffusion path in
 says every number has to come from a measurement, and rule 13 says I have to
 list what I didn't measure. Those two are why the limitations section is as long
 as it is.
+
+## Citation
+
+If you use this work, please cite it. The same record is in [`CITATION.cff`](CITATION.cff).
+
+```bibtex
+@software{mustafazada2026latentdiffusionfromscrat,
+  author  = {Mustafazada, Aghasalim},
+  title   = {Latent Diffusion from scratch},
+  year    = {2026},
+  version = {1.0.1},
+  doi     = {10.5281/zenodo.23003654},
+  url     = {https://github.com/aghasalim/latent-diffusion-from-scratch}
+}
+```
 
 ## License
 
